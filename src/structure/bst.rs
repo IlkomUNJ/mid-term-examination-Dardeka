@@ -62,6 +62,28 @@ impl BstNode {
         self.right = Some(new_node);
     }
 
+    // add-node function
+    pub fn add_node (&mut self, target_node: &BstNodeLink, value: i32) -> bool {
+        let key = self.key.unwrap();
+        if value < key{
+            if self.left.is_some(){
+                let new_left = self.left.clone().unwrap();
+                self.left.clone().unwrap().borrow_mut().add_node(&new_left, value);
+            }else{
+                self.add_left_child(target_node, value);
+            }
+        }
+        if value > key{
+            if self.right.is_some(){
+                let new_right = self.right.clone().unwrap();
+                return self.right.clone().unwrap().borrow_mut().add_node(&new_right, value);
+            }else{
+                self.add_right_child(target_node, value);
+            }
+        }
+        return true
+    }
+
     /**change node u, with node v via parent swap
      * v must be singular node
      * this function only update parent, copy v value while original link on v is untouched which could be problematic
@@ -211,6 +233,86 @@ impl BstNode {
 
             None
         }
+    }
+
+    // Tree-Predecessor function
+    pub fn tree_predecessor(node: &BstNodeLink) -> Option<BstNodeLink>{
+        if let Some(left_node) = &node.borrow().left{
+            return Some(left_node.borrow().maximum());
+        }else{
+            let mut x_node = node;
+            let mut y_node = BstNode::upgrade_weak_to_strong(x_node.borrow().parent.clone());
+            let mut temp:BstNodeLink;
+
+            while let Some(ref exist) =  y_node{
+                if let Some(ref right_child) = exist.borrow().right{
+                    if BstNode::is_node_match(right_child, x_node){
+                        return Some(exist.clone());
+                    }
+                }
+                temp = y_node.unwrap();
+                x_node = &temp;
+                y_node = BstNode::upgrade_weak_to_strong(temp.borrow().parent.clone());
+            }
+        }
+        None
+    }
+
+    pub fn median(&self) -> Vec<i32>{
+        let mut list_node: Vec<i32> = vec![];
+        // list_node.push(self.inorder_walk());
+        if self.key.is_some(){
+            let left = self.left.clone().unwrap().borrow().inorder_walk();
+            list_node.push(left);
+            list_node.push(self.key.unwrap());
+            let right = self.right.clone().unwrap().borrow().inorder_walk();
+            list_node.push(right);
+
+
+            // print!("{}, ", self.key.unwrap());
+            // list_node.push(self.key.unwrap());
+            // if self.left.is_some(){
+            //     let left = self.left.clone().unwrap();
+            //     let result = left.borrow().inorder_walk();
+            //     list_node.push(result);
+            // }
+            // if self.right.is_some(){
+            //     let right = self.right.clone().unwrap();
+            //     let result = right.borrow().inorder_walk();
+            //     list_node.push(result);
+            // }
+        }
+        let mut count = 0;
+        for &node in list_node.iter(){
+            count += 1;
+        }
+
+        println!("Total node is : {count}");
+        list_node
+    }
+
+    pub fn inorder_walk(&self) -> i32{
+        if self.key.is_some(){
+            print!("{}, ", self.key.unwrap());
+            if self.left.is_some() && self.right.is_some(){
+                let left = self.left.clone().unwrap();
+                left.borrow().inorder_walk();
+                // if left.borrow().left.is_some()
+                let right = self.right.clone().unwrap();
+                right.borrow().inorder_walk();
+            }
+            if self.left.is_some() && self.right.is_none(){
+                let left = self.left.clone().unwrap();
+                left.borrow().inorder_walk();
+            }
+            if self.right.is_some() && self.left.is_none(){
+                let right = self.right.clone().unwrap();
+                right.borrow().inorder_walk();
+            }
+            // if self.right.is_some(){
+            // }
+        }
+        return self.key.unwrap();
     }
 
     /**
